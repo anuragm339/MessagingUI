@@ -1,0 +1,75 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.application") version "4.4.2"
+}
+
+version = "0.1"
+group = "com.pos.tracker"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+
+    implementation("io.micronaut:micronaut-http-client")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut.views:micronaut-views-core")
+
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.yaml:snakeyaml")
+
+    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+}
+
+application {
+    mainClass.set("com.pos.tracker.Application")
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+micronaut {
+    runtime("netty")
+    processing {
+        incremental(true)
+        annotations("com.pos.tracker.*")
+    }
+}
+
+// Task to install npm dependencies
+task npmInstall(type: Exec) {
+    commandLine 'npm', 'install'
+}
+
+// Task to build React frontend
+task buildFrontend(type: Exec) {
+    dependsOn npmInstall
+    commandLine 'npm', 'run', 'build'
+}
+
+// Task to copy frontend build to resources
+task copyFrontend(type: Copy) {
+    dependsOn buildFrontend
+    from 'dist'
+    into 'src/main/resources/public'
+}
+
+
+
+// Make processResources depend on copyFrontend
+processResources.dependsOn copyFrontend
+
+// Clean frontend build
+clean {
+    delete 'dist'
+    delete 'src/main/resources/public'
+    delete 'node_modules'
+}

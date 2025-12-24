@@ -1,0 +1,195 @@
+{
+  "root": {
+    "localUrl": "https://api-ppe.abc.com/messaging/v1",
+    "offset": "1138155779",
+    "status": "OK",
+    "lastSeen": "2025-12-23T06:51:07.479379003Z",
+    "id": "https://api-ppe.abc.com/messaging/v1"
+  },
+  "followers": [
+    {
+      "group": "a1028938-1db0-4456-9df0-e1ef4bfa1180",
+      "localUrl": "http://cz-19941-0007327a07db:31337",
+      "offset": "0",
+      "status": "FOLLOWING",
+      "following": [
+        "http://cz-19941-000732663006.tgrc.abc.org:31337",
+        "http://stores.ppe.isc.abccloud.com/messaging/pipe"
+      ],
+      "requestedToFollow": [
+        "https://api-ppe.abc.com/messaging/v1"
+      ],
+      "lastSeen": "2025-12-23T06:51:03.941290243Z",
+      "lastRegistrationTime": "2025-12-18T15:30:00.87331438Z",
+      "pipe": {
+        "pipeState": "UP_TO_DATE",
+        "ip": "10.82.188.213",
+        "host": "cz-19941-0007327a07db",
+        "port": "31337",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-ebe"
+      },
+      "offsets": {
+        "LOCAL_LATEST_OFFSET": "1138135097",
+        "PIPE_OFFSET": "1138135301",
+        "GLOBAL_LATEST_OFFSET": "1138135301",
+        "MAX_OFFSET_CONSUMERS": "1138135097"
+      },
+      "provider": {
+        "mode": "FOLLOWING",
+        "timeOfLastSent": "2025-12-18T14:36:51.160646753Z",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-ebe",
+        "timeOfLastAck": "2025-12-18T14:36:51.165779318Z",
+        "lastOffsetSent": "1138135097",
+        "lastAckedOffset": "1138135097"
+      },
+      "id": "a1028938-1db0-4456-9df0-e1ef4bfa1180|http://cz-19941-0007327a07db:31337"
+    },
+    {
+      "group": "a1028938-1db0-4456-9df0-e1ef4bfa1180",
+      "localUrl": "http://cz19941pxe01.tgrc.abc.org:31337",
+      "offset": "0",
+      "status": "FOLLOWING",
+      "following": [
+        "http://cz-19941-0007327a07db:31337",
+        "http://stores.ppe.isc.abccloud.com/messaging/pipe"
+      ],
+      "requestedToFollow": [
+        "http://cz-19941-0007327a07db:31337",
+        "https://api-ppe.abc.com/messaging/v1"
+      ],
+      "lastSeen": "2025-12-23T06:51:03.941290825Z",
+      "lastRegistrationTime": "2025-12-23T06:49:37.440632888Z",
+      "pipe": {
+        "pipeState": "UP_TO_DATE",
+        "ip": "10.82.188.250",
+        "host": "cz19941pxe01.tgrc.abc.org",
+        "port": "31337",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2"
+      },
+      "offsets": {
+        "LOCAL_LATEST_OFFSET": "1138152785",
+        "PIPE_OFFSET": "1138152801",
+        "GLOBAL_LATEST_OFFSET": "1138152801",
+        "MAX_OFFSET_CONSUMERS": "1138152785"
+      },
+      "provider": {
+        "mode": "FOLLOWING",
+        "timeOfLastSent": "2025-12-22T11:34:38.175545035Z",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2",
+        "timeOfLastAck": "2025-12-22T11:34:38.215028155Z",
+        "lastOffsetSent": "1138152785",
+        "lastAckedOffset": "1138152785"
+      },
+      "id": "a1028938-1db0-4456-9df0-e1ef4bfa1180|http://cz19941pxe01.tgrc.abc.org:31337"
+    },
+    {
+      "group": "a1028938-1db0-4456-9df0-e1ef4bfa1180",
+      "localUrl": "http://cz-19941-0007327a07db.tgrc.abc.org:31337",
+      "offset": "0",
+      "status": "FOLLOWING",
+      "following": [
+        "http://cz-19941-0007327a07db:31337",
+        "http://stores.ppe.isc.abccloud.com/messaging/pipe"
+      ],
+      "requestedToFollow": [
+        "http://cz-19941-0007327a07db:31337",
+        "https://api-ppe.abc.com/messaging/v1"
+      ],
+      "lastSeen": "2025-12-23T06:51:03.941291129Z",
+      "lastRegistrationTime": "2025-12-23T06:49:46.079324021Z",
+      "pipe": {
+        "pipeState": "UP_TO_DATE",
+        "ip": "10.82.188.213",
+        "host": "cz-19941-0007327a07db.tgrc.abc.org",
+        "port": "31337",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2"
+      },
+      "offsets": {
+        "LOCAL_LATEST_OFFSET": "1138138566",
+        "PIPE_OFFSET": "1138138716",
+        "GLOBAL_LATEST_OFFSET": "1138138716",
+        "MAX_OFFSET_CONSUMERS": "1138138566"
+      },
+      "provider": {
+        "mode": "FOLLOWING",
+        "timeOfLastSent": "2025-12-22T11:44:54.283326808Z",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2",
+        "timeOfLastAck": "2025-12-22T11:44:56.214368982Z",
+        "lastOffsetSent": "1138138566",
+        "lastAckedOffset": "1138138566"
+      },
+      "id": "a1028938-1db0-4456-9df0-e1ef4bfa1180|http://cz-19941-0007327a07db.tgrc.abc.org:31337"
+    },
+    {
+      "group": "a1028938-1db0-4456-9df0-e1ef4bfa1180",
+      "localUrl": "http://cz-19941-000732663006.tgrc.abc.org:31337",
+      "offset": "0",
+      "status": "FOLLOWING",
+      "following": [
+        "http://stores.ppe.isc.abccloud.com/messaging/pipe"
+      ],
+      "requestedToFollow": [
+        "http://cz19941pxe01.tgrc.abc.org:31337",
+        "http://cz-19941-0007327a07db:31337",
+        "https://api-ppe.abc.com/messaging/v1"
+      ],
+      "lastSeen": "2025-12-23T06:51:03.941291373Z",
+      "lastRegistrationTime": "2025-12-23T06:49:11.404188337Z",
+      "pipe": {
+        "pipeState": "UP_TO_DATE",
+        "ip": "10.82.188.215",
+        "host": "cz-19941-000732663006.tgrc.abc.org",
+        "port": "31337",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2"
+      },
+      "offsets": {
+        "LOCAL_LATEST_OFFSET": "1138155535",
+        "PIPE_OFFSET": "1138155763",
+        "GLOBAL_LATEST_OFFSET": "1138155763",
+        "MAX_OFFSET_CONSUMERS": "1138155535"
+      },
+      "provider": {
+        "mode": "FOLLOWING",
+        "timeOfLastSent": "2025-12-23T05:02:16.709436451Z",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2",
+        "timeOfLastAck": "2025-12-23T05:02:16.719681501Z",
+        "lastOffsetSent": "1138155535",
+        "lastAckedOffset": "1138155535"
+      },
+      "id": "a1028938-1db0-4456-9df0-e1ef4bfa1180|http://cz-19941-000732663006.tgrc.abc.org:31337"
+    },
+    {
+      "group": "a1028938-1db0-4456-9df0-e1ef4bfa1180",
+      "localUrl": "http://cz-19941-00073293c548.tgrc.abc.org:31337",
+      "offset": "0",
+      "status": "FOLLOWING",
+      "following": [
+        "http://stores.ppe.isc.abccloud.com/messaging/pipe"
+      ],
+      "requestedToFollow": [
+        "http://cz19941pxe01.tgrc.abc.org:31337",
+        "http://cz-19941-0007327a07db:31337",
+        "https://api-ppe.abc.com/messaging/v1"
+      ],
+      "lastSeen": "2025-12-23T06:51:03.94129163Z",
+      "lastRegistrationTime": "2025-12-23T06:50:03.970472391Z",
+      "pipe": {
+        "pipeState": "UP_TO_DATE",
+        "ip": "10.90.146.232",
+        "host": "cz-19941-00073293c548.tgrc.abc.org",
+        "port": "31337",
+        "v": "1.0.244-ATSU-1028_filedbcopy_provider_signedurl-cd2"
+      },
+      "offsets": {
+        "LOCAL_LATEST_OFFSET": "1138155535",
+        "PIPE_OFFSET": "1138155773",
+        "GLOBAL_LATEST_OFFSET": "1138155773",
+        "MAX_OFFSET_CONSUMERS": "1138155535"
+      },
+      "provider": {
+        "mode": "FOLLOWING"
+      },
+      "id": "a1028938-1db0-4456-9df0-e1ef4bfa1180|http://cz-19941-00073293c548.tgrc.abc.org:31337"
+    }
+  ]
+}

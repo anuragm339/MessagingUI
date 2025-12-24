@@ -1,0 +1,2 @@
+rootProject.name = "pos-message-tracker"
+include("backend")
