@@ -1,0 +1,185 @@
+<!doctype html>
+<html xmlns="www.w3.org">
+<head>
+    <meta charset="utf-8">
+    <title>Aqueduct Support</title>
+    <link href="assets/favicon.png" rel="icon" type="image/png">
+    <!-- path needs to be ui/ or ui/index.html ui will not work -->
+    <link href="ui.css" rel="stylesheet">
+    <link href="message_tracker_ui.css" rel="stylesheet">
+
+    <!-- jQuery first -->
+    <script src="code.jquery.com"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="cdn.datatables.net">
+    <link rel="stylesheet" type="text/css" href="cdn.datatables.net">
+
+    <!-- Other libraries -->
+    <script charset="utf-8" src="assets/demoGraph.js"></script>
+
+    <link href="cdnjs.cloudflare.com" rel="stylesheet">
+    <script charset="utf-8" src="d3js.org"></script>
+
+    <script src="cdnjs.cloudflare.com"></script>
+    <script src="cdnjs.cloudflare.com"></script>
+    <script src="cdnjs.cloudflare.com"></script>
+
+    <!-- DataTables JS -->
+    <script type="text/javascript" src="cdn.datatables.net"></script>
+    <script type="text/javascript" src="cdn.datatables.net"></script>
+</head>
+<body>
+<div class="utility-bar">
+    <ul class="user">
+        <li id="login"><a href="#">Login</a></li>
+        <li id="username" style="display: none;"><span>Username</span></li>
+        <li id="logout" style="display: none;"><a href="#">Logout</a></li>
+    </ul>
+    <ul>
+        <li><a href="www.abc.com" target="_blank"><span>abc.com</span></a></li>
+        <li><a href="www.abcplc.com"><span>abcPlc.com</span></a></li>
+        <li><a href="www.ourabc.com"><span>Ourabc.com</span></a></li>
+        <li><a href="abc.sharepoint.com"><span>abcpedia</span></a></li>
+        <li><a href="splunk-operations.ocset.net"><span>Splunk Dashboards</span></a>
+        </li>
+    </ul>
+</div>
+
+<div class="heading">
+    <div class="branding">
+        <img alt="abc logo" src="assets/abc-logo.svg"/>
+        <span class="small-caps">Technology</span>
+    </div>
+    <h1>Aqueduct Support</h1>
+</div>
+
+<div class="tabs">
+    <span data-tab-value="#tab_1">Store</span>
+    <span data-tab-value="#tab_2">MessageTracker</span>
+</div>
+
+<div class="tab-content">
+    <!-- Tab 1 Content -->
+    <div class="tabs__tab active" data-tab-info id="tab_1">
+        <div class="content">
+            <select id="parentSelector">
+                <option value="requestedVsActual">Requested vs actual</option>
+                <option selected value="following">Following</option>
+                <option value="requestedToFollow">Requested to follow</option>
+            </select>
+
+            <select id="nameSelector">
+                <option value="none">None</option>
+                <option value="id">Id</option>
+                <option value="localUrl">Url</option>
+                <option value="offset">Offset</option>
+                <option value="lastSeen">Last seen</option>
+                <option value="status">Status</option>
+                <option value="pipe.offset">Pipe Offset</option>
+                <option value="pipe.ip">Pipe Ip</option>
+                <option value="pipe.pipeState">Pipe State</option>
+                <option selected value="pipe.host">Pipe Host</option>
+                <option value="provider.mode">Provider Mode</option>
+                <option value="provider.v">Provider version</option>
+                <option value="provider.lastAckedOffset">Provider Last Ack Offset</option>
+                <option value="provider.timeOfLastAck">Provider Last Ack time</option>
+                <option value="provider.lastOffsetSent">Provider Last Sent Offset</option>
+                <option value="provider.timeOfLastSent">Provider Last Sent time</option>
+                <option value="provider.latestMessageLatency">Provider Last Message Latency</option>
+            </select>
+
+            <select id="styleSelector"></select>
+            <select id="groups"></select>
+
+            <div class="refresh-box">
+                <button id="refresh">Refresh</button>
+                <span class="form-item">
+                        <input checked id="autorefresh" type="checkbox" value="hello">
+                        <label for="autorefresh">Autorefresh</label>
+                    </span>
+                <div id="last-refresh-time">Hello</div>
+            </div>
+
+            <div class="content">
+                Search for Store:
+                <select id="country">
+                    <option value="uk">UK</option>
+                    <option value="IE">IE</option>
+                    <option value="CZ">CZ</option>
+                    <option value="HU">HU</option>
+                    <option value="SK">SK</option>
+                </select>
+                <input id="store" placeholder="Enter store number"/>
+            </div>
+
+            <svg id="svg-canvas"></svg>
+        </div>
+    </div>
+
+    <!-- Tab 2 Content -->
+    <div class="tabs__tab" data-tab-info id="tab_2">
+        <div id="message-tracker-root"></div>
+    </div>
+
+    <!-- Popups -->
+    <div class="popup" id="popup">
+        <span class="close" onclick="closePopup()">&times;</span>
+        <p>Your Request has been submitted</p>
+    </div>
+    <div class="errorpopup" id="errorpopup">
+        <span class="close" onclick="errorOpenPopup()">&times;</span>
+        <p id="errorcontent" style="color: white;">Something went wrong. Please try again</p>
+    </div>
+</div>
+
+<!-- Application Scripts -->
+<script charset="utf-8" src="oidc-client/oidc-client.js"></script>
+<script charset="utf-8" src="app/config.js"></script>
+<script charset="utf-8" src="app/login.js"></script>
+<script charset="utf-8" src="app/locations.js"></script>
+<script charset="utf-8" src="app/app.js"></script>
+<script charset="utf-8" src="app/clusterDropdown.js"></script>
+<script charset="utf-8" src="app/store-selector.js"></script>
+<script charset="utf-8" src="app/message_tracker.js"></script>
+
+<!-- Initialize Application -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable defaults
+        $.extend($.fn.dataTable.defaults, {
+            responsive: true,
+            processing: true,
+            pageLength: 10,
+            dom: '<"top"lf>rt<"bottom"ip><"clear">',
+            language: {
+                processing: "Loading...",
+                search: "Search:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                emptyTable: "No data available"
+            }
+        });
+
+        // Initialize store input handler
+        document.getElementById("store").oninput = function() {
+            App.drawOnStoreInput();
+        };
+
+        // Initialize groups change handler
+        document.getElementById("groups").onchange = function() {
+            App.drawGraph();
+        };
+
+        // Initialize application
+        Config.init()
+            .then(() => Login.init(Config.oidc))
+            .then(() => Login.tokenSwap())
+            .then(() => Locations.populateDropDown())
+            .then(() => App.init());
+    });
+</script>
+</body>
+</html>

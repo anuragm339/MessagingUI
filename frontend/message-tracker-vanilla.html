@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Tracker - Vanilla JS</title>
+  <link rel="stylesheet" href="./components/MessageTracker.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .tab-content {
+      min-height: calc(100vh - 130px);
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-header">
+    <h1>POS Message Tracker</h1>
+  </div>
+
+  <div class="tab-content">
+    <div id="message-tracker-root"></div>
+  </div>
+
+  <!-- MessageTracker2 Module -->
+  <script type="module">
+    // Import modular MessageTracker (no auth dependencies)
+    import {
+      MessageTracker2,
+      MessageTrackerAPI,
+      MessageTrackerState,
+      MessageTrackerUI
+    } from './components/MessageTracker2.js';
+
+    // Make modules globally available for debugging
+    window.MessageTracker2 = MessageTracker2;
+    window.MessageTrackerAPI = MessageTrackerAPI;
+    window.MessageTrackerState = MessageTrackerState;
+    window.MessageTrackerUI = MessageTrackerUI;
+
+    console.log('✅ MessageTracker2 modules loaded');
+    console.log('💡 Access tracker: window.messageTracker');
+    console.log('💡 Debug info: window.messageTracker.debug()');
+  </script>
+</body>
+</html>
