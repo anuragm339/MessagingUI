@@ -16,35 +16,7 @@ const API_BASE_URL = 'http://localhost:8080/api'
 const USE_MOCK_DATA = true // Set to false when backend is ready
 
 // Mock data for testing
-const mockClusters = [
-  {
-    id: 'cluster-a',
-    name: 'Cluster A',
-    stores: [
-      { id: '1001', name: 'Store 1001' },
-      { id: '1002', name: 'Store 1002' },
-      { id: '1003', name: 'Store 1003' }
-    ]
-  },
-  {
-    id: 'cluster-b',
-    name: 'Cluster B',
-    stores: [
-      { id: '2001', name: 'Store 2001' },
-      { id: '2002', name: 'Store 2002' }
-    ]
-  },
-  {
-    id: 'cluster-c',
-    name: 'Cluster C',
-    stores: [
-      { id: '3001', name: 'Store 3001' },
-      { id: '3002', name: 'Store 3002' },
-      { id: '3003', name: 'Store 3003' },
-      { id: '3004', name: 'Store 3004' }
-    ]
-  }
-]
+
 
 /**
  * API Service class for MessageTracker
@@ -117,13 +89,23 @@ export class MessageTrackerAPI {
     try {
       console.log('📡 Fetching stores for cluster:', clusterId)
 
-      let storeIds
+      let responseData
 
       if (USE_MOCK_DATA) {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300))
-        // Mock response - array of store IDs
-        storeIds = ["1001", "1002", "1003", "1004", "1005"]
+        // Mock response - nested object matching real API format
+        responseData = {
+          [clusterId]: {
+            "9a6c17d6-f542-45e4-b525-3984974f6203": ["9749"],
+            "1389934c-525a-44df-b0dd-e20032044fb3": ["9345"],
+            "ef242da1-004d-4bda-a775-3c1bb3bd1f4e": ["9321"],
+            "7cc45342-3b31-4bde-ba28-a93057708743": ["9778"],
+            "c0cda4cb-0d6c-4708-ab29-714baf632ca6": ["9316"],
+            "cf553240-f818-4557-bcc7-6ee03e3a8db5": ["9769"],
+            "98ff1cdb-25d8-405f-a592-7de3187e85f8": ["9775"]
+          }
+        }
       } else {
         const response = await fetch(`${API_BASE_URL}/clusters/${encodeURIComponent(clusterId)}/stores`, {
           method: 'GET',
@@ -136,19 +118,52 @@ export class MessageTrackerAPI {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
 
-        storeIds = await response.json()
+        responseData = await response.json()
       }
 
-      // Validate response is an array
-      if (!Array.isArray(storeIds)) {
-        throw new Error('Invalid stores response - expected array of store IDs')
+      console.log('📦 Raw API response:', responseData)
+
+      // Handle different response formats
+      let stores = []
+
+      if (Array.isArray(responseData)) {
+        // Format 1: Simple array ["1001", "1002", "1003"]
+        stores = responseData.map(id => ({
+          id: String(id),
+          storeId: String(id),
+          storeNumber: String(id),
+          name: String(id)
+        }))
+      } else if (typeof responseData === 'object' && responseData !== null) {
+        // Format 2: Nested object with cluster ID as key
+        // { "7293a0f2-...": { "storeId1": ["9749"], "storeId2": ["9345"], ... } }
+
+        // Get the data for this specific cluster
+        const clusterData = responseData[clusterId]
+
+        if (clusterData && typeof clusterData === 'object') {
+          // Extract stores with both storeId (UUID) and storeNumber
+          stores = Object.entries(clusterData).flatMap(([storeId, storeNumbers]) => {
+            // Each storeId can have multiple store numbers
+            return storeNumbers.map(storeNumber => ({
+              id: storeId, // UUID
+              storeId: storeId, // UUID
+              storeNumber: String(storeNumber), // Actual store number like "9749"
+              name: String(storeNumber) // Display the store number
+            }))
+          })
+          console.log('📊 Extracted stores from nested structure:', stores)
+        } else {
+          throw new Error('Invalid stores response - cluster data not found')
+        }
+      } else {
+        throw new Error('Invalid stores response - expected array or object')
       }
 
-      // Transform store IDs to store objects
-      const stores = storeIds.map(id => ({
-        id: String(id),
-        name: `Store ${id}`
-      }))
+      // Validate we have stores
+      if (!Array.isArray(stores) || stores.length === 0) {
+        throw new Error('No stores found in response')
+      }
 
       console.log('✅ Stores fetched:', stores.length, 'stores')
 
@@ -156,6 +171,160 @@ export class MessageTrackerAPI {
     } catch (error) {
       console.error('❌ Failed to fetch stores:', error)
       const errorMessage = handleAPIError(error, 'fetching stores')
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
+   * Fetch paginated stores for a message with overall POS status
+   * @param {string} messageKey - Message key
+   * @param {number} page - Page number (0-indexed)
+   * @param {number} size - Page size
+   * @returns {Promise<Object>} Pageable store data with overall status
+   */
+  static async fetchStoresByMessage(messageKey, page = 0, size = 20) {
+    try {
+      console.log(`📡 Fetching stores: message=${messageKey}, page=${page}, size=${size}`)
+
+      let data
+
+      if (USE_MOCK_DATA) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Generate mock pageable response
+        const totalElements = 7 // Simulate 7 stores
+        const totalPages = Math.ceil(totalElements / size)
+        const startIdx = page * size
+        const endIdx = Math.min(startIdx + size, totalElements)
+
+        const content = []
+        for (let i = startIdx; i < endIdx; i++) {
+          const storeNumber = String(9749 + i)
+          const total = Math.floor(Math.random() * 10) + 5
+          const delivered = Math.floor(Math.random() * total)
+          const failed = Math.floor(Math.random() * (total - delivered))
+          const pending = Math.floor(Math.random() * (total - delivered - failed))
+          const processing = total - delivered - failed - pending
+
+          content.push({
+            storeId: `store-uuid-${i + 1}`,
+            name: storeNumber,
+            overall: {
+              total,
+              delivered,
+              pending,
+              failed,
+              processing
+            }
+          })
+        }
+
+        data = {
+          content,
+          page,
+          size,
+          totalElements,
+          totalPages,
+          first: page === 0,
+          last: page === totalPages - 1
+        }
+      } else {
+        const response = await fetch(
+          `${API_BASE_URL}/stores?messageKey=${encodeURIComponent(messageKey)}&page=${page}&size=${size}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        data = await response.json()
+      }
+
+      console.log(`✅ Stores fetched: ${data.content.length} of ${data.totalElements} total`)
+      return data
+    } catch (error) {
+      console.error('❌ Failed to fetch stores:', error)
+      const errorMessage = handleAPIError(error, 'fetching stores')
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
+   * Fetch paginated POS machine data for a store and message
+   * @param {string} storeId - Store ID (UUID)
+   * @param {string} messageKey - Message key
+   * @param {number} page - Page number (0-indexed)
+   * @param {number} size - Page size
+   * @returns {Promise<Object>} Pageable POS machine data
+   */
+  static async fetchPOSMachines(storeId, messageKey, page = 0, size = 20) {
+    try {
+      console.log(`📡 Fetching POS machines: store=${storeId}, message=${messageKey}, page=${page}, size=${size}`)
+
+      let data
+
+      if (USE_MOCK_DATA) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Generate mock pageable response
+        const totalElements = 45 // Simulate 45 POS machines
+        const totalPages = Math.ceil(totalElements / size)
+        const startIdx = page * size
+        const endIdx = Math.min(startIdx + size, totalElements)
+
+        const content = []
+        for (let i = startIdx; i < endIdx; i++) {
+          const statuses = ['delivered', 'pending', 'failed', 'processing']
+          content.push({
+            id: `${storeId}-POS-${String(i + 1).padStart(3, '0')}`,
+            name: `POS-${String(i + 1).padStart(3, '0')}`,
+            status: statuses[Math.floor(Math.random() * statuses.length)],
+            timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+            attempts: Math.floor(Math.random() * 3) + 1
+          })
+        }
+
+        data = {
+          content,
+          page,
+          size,
+          totalElements,
+          totalPages,
+          first: page === 0,
+          last: page === totalPages - 1
+        }
+      } else {
+        const response = await fetch(
+          `${API_BASE_URL}/pos?messageKey=${encodeURIComponent(messageKey)}&storeId=${encodeURIComponent(storeId)}&page=${page}&size=${size}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        data = await response.json()
+      }
+
+      console.log(`✅ POS machines fetched: ${data.content.length} of ${data.totalElements} total`)
+
+      return data
+    } catch (error) {
+      console.error('❌ Failed to fetch POS machines:', error)
+      const errorMessage = handleAPIError(error, 'fetching POS machines')
       throw new Error(errorMessage)
     }
   }

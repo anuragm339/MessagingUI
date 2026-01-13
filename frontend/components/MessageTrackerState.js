@@ -10,7 +10,7 @@ export class MessageTrackerState {
     this.state = {
       // Form state
       messageKey: '',
-      targetType: 'store',
+      targetType: 'cluster',
       storeNumber: '',
       selectedCluster: '',
       selectedStores: [],
@@ -32,6 +32,10 @@ export class MessageTrackerState {
       loading: false,
       error: null,
       loadingClusters: false,
+      loadingStores: {},        // Object mapping messageId → boolean
+      storesPagination: {},     // Object mapping messageId → {page, size, total, totalPages, content}
+      loadingPOSMachines: {},   // Object mapping storeKey → boolean
+      posPagination: {},        // Object mapping storeKey → {page, size, total, totalPages, content}
 
       ...initialState
     }

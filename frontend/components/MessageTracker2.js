@@ -268,6 +268,24 @@ class MessageTracker2 {
       case 'toggle-store':
         this.handleToggleStore(target)
         break
+
+      case 'stores-prev-page':
+      case 'stores-next-page':
+        e.preventDefault()
+        const messageId = target.dataset.messageId
+        const storesCurrentPage = parseInt(target.dataset.currentPage)
+        const storesNewPage = action === 'stores-prev-page' ? storesCurrentPage - 1 : storesCurrentPage + 1
+        this.handleStoresPagination(messageId, storesNewPage)
+        break
+
+      case 'pos-prev-page':
+      case 'pos-next-page':
+        e.preventDefault()
+        const storeKey = target.dataset.storeKey
+        const posCurrentPage = parseInt(target.dataset.currentPage)
+        const posNewPage = action === 'pos-prev-page' ? posCurrentPage - 1 : posCurrentPage + 1
+        this.handlePOSPagination(storeKey, posNewPage)
+        break
     }
   }
 
@@ -452,18 +470,76 @@ class MessageTracker2 {
 
   /**
    * Handle toggle message expand/collapse
+   * Fetches paginated stores when expanding
    */
-  handleToggleMessage(target) {
+  async handleToggleMessage(target) {
     const btn = target.closest('[data-message-id]')
-    if (btn) {
-      const messageId = parseInt(btn.dataset.messageId)
-      const expandedMessages = { ...this.state.get('expandedMessages') }
-      const wasExpanded = expandedMessages[messageId]
-      expandedMessages[messageId] = !expandedMessages[messageId]
+    if (!btn) return
 
-      console.log('🔽 Toggling message:', messageId, wasExpanded ? 'collapse' : 'expand')
+    const messageId = parseInt(btn.dataset.messageId)
+    const currentState = this.state.getState()
+    const expandedMessages = { ...currentState.expandedMessages }
+    const wasExpanded = expandedMessages[messageId]
 
+    // If collapsing, just toggle
+    if (wasExpanded) {
+      expandedMessages[messageId] = false
       this.state.setState({ expandedMessages })
+      console.log('🔼 Collapsed message:', messageId)
+      return
+    }
+
+    // If expanding, fetch paginated stores
+    try {
+      // Find the message to get messageKey
+      const message = currentState.trackedMessages.find(m => m.id === messageId)
+      if (!message) {
+        throw new Error('Message not found')
+      }
+
+      console.log('🔽 Expanding message:', messageId, '- fetching stores')
+
+      // Set loading state
+      const loadingStores = { ...currentState.loadingStores }
+      loadingStores[messageId] = true
+      expandedMessages[messageId] = true
+
+      this.state.setState({
+        expandedMessages,
+        loadingStores,
+        error: null
+      })
+
+      // Fetch first page of stores
+      const storesData = await this.api.fetchStoresByMessage(message.messageKey, 0, 20)
+
+      // Store pagination data
+      const updatedState = this.state.getState()
+      const storesPagination = { ...updatedState.storesPagination }
+      storesPagination[messageId] = storesData
+
+      // Clear loading state
+      const finalLoadingState = { ...updatedState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        storesPagination,
+        loadingStores: finalLoadingState
+      })
+
+      console.log('✅ Stores loaded for message:', messageId)
+    } catch (error) {
+      console.error('❌ Failed to fetch stores:', error)
+
+      // Clear loading state and show error
+      const errorState = this.state.getState()
+      const finalLoadingState = { ...errorState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        error: 'Failed to load stores: ' + error.message,
+        loadingStores: finalLoadingState
+      })
     }
   }
 
@@ -497,14 +573,187 @@ class MessageTracker2 {
 
   /**
    * Handle toggle store expand/collapse
+   * Fetches paginated POS data when expanding
    */
-  handleToggleStore(target) {
+  async handleToggleStore(target) {
     const header = target.closest('[data-key]')
-    if (header) {
-      const key = header.dataset.key
-      const expandedStores = { ...this.state.get('expandedStores') }
-      expandedStores[key] = !expandedStores[key]
+    if (!header) return
+
+    const key = header.dataset.key // Format: "messageId-storeId"
+    const [messageId, storeId] = key.split('-')
+
+    const currentState = this.state.getState()
+    const expandedStores = { ...currentState.expandedStores }
+    const wasExpanded = expandedStores[key]
+
+    // If collapsing, just toggle
+    if (wasExpanded) {
+      expandedStores[key] = false
       this.state.setState({ expandedStores })
+      console.log('🔼 Collapsed store:', key)
+      return
+    }
+
+    // If expanding, fetch paginated POS data
+    try {
+      // Find the message to get messageKey
+      const message = currentState.trackedMessages.find(m => m.id === parseInt(messageId))
+      if (!message) {
+        throw new Error('Message not found')
+      }
+
+      console.log('🔽 Expanding store:', key, '- fetching POS data')
+
+      // Set loading state
+      const loadingPOSMachines = { ...currentState.loadingPOSMachines }
+      loadingPOSMachines[key] = true
+      expandedStores[key] = true
+
+      this.state.setState({
+        expandedStores,
+        loadingPOSMachines,
+        error: null
+      })
+
+      // Fetch first page of POS machines
+      const posData = await this.api.fetchPOSMachines(storeId, message.messageKey, 0, 20)
+
+      // Store pagination data
+      const updatedState = this.state.getState()
+      const posPagination = { ...updatedState.posPagination }
+      posPagination[key] = posData
+
+      // Clear loading state
+      const finalLoadingState = { ...updatedState.loadingPOSMachines }
+      delete finalLoadingState[key]
+
+      this.state.setState({
+        posPagination,
+        loadingPOSMachines: finalLoadingState
+      })
+
+      console.log('✅ POS data loaded for store:', key)
+    } catch (error) {
+      console.error('❌ Failed to fetch POS data:', error)
+
+      // Clear loading state and show error
+      const errorState = this.state.getState()
+      const finalLoadingState = { ...errorState.loadingPOSMachines }
+      delete finalLoadingState[key]
+
+      this.state.setState({
+        error: 'Failed to load POS machines: ' + error.message,
+        loadingPOSMachines: finalLoadingState
+      })
+    }
+  }
+
+  /**
+   * Handle pagination for stores
+   */
+  async handleStoresPagination(messageId, newPage) {
+    const currentState = this.state.getState()
+
+    // Find the message to get messageKey
+    const message = currentState.trackedMessages.find(m => m.id === parseInt(messageId))
+    if (!message) return
+
+    try {
+      console.log(`📄 Loading page ${newPage} for message:`, messageId)
+
+      // Set loading state
+      const loadingStores = { ...currentState.loadingStores }
+      loadingStores[messageId] = true
+
+      this.state.setState({
+        loadingStores,
+        error: null
+      })
+
+      // Fetch new page
+      const storesData = await this.api.fetchStoresByMessage(message.messageKey, newPage, 20)
+
+      // Update pagination data
+      const updatedState = this.state.getState()
+      const storesPagination = { ...updatedState.storesPagination }
+      storesPagination[messageId] = storesData
+
+      // Clear loading state
+      const finalLoadingState = { ...updatedState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        storesPagination,
+        loadingStores: finalLoadingState
+      })
+
+      console.log(`✅ Page ${newPage} loaded for message:`, messageId)
+    } catch (error) {
+      console.error('❌ Failed to load page:', error)
+
+      const errorState = this.state.getState()
+      const finalLoadingState = { ...errorState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        error: 'Failed to load stores page: ' + error.message,
+        loadingStores: finalLoadingState
+      })
+    }
+  }
+
+  /**
+   * Handle pagination for POS machines
+   */
+  async handlePOSPagination(key, newPage) {
+    const [messageId, storeId] = key.split('-')
+    const currentState = this.state.getState()
+
+    // Find the message to get messageKey
+    const message = currentState.trackedMessages.find(m => m.id === parseInt(messageId))
+    if (!message) return
+
+    try {
+      console.log(`📄 Loading page ${newPage} for store:`, key)
+
+      // Set loading state
+      const loadingPOSMachines = { ...currentState.loadingPOSMachines }
+      loadingPOSMachines[key] = true
+
+      this.state.setState({
+        loadingPOSMachines,
+        error: null
+      })
+
+      // Fetch new page
+      const posData = await this.api.fetchPOSMachines(storeId, message.messageKey, newPage, 20)
+
+      // Update pagination data
+      const updatedState = this.state.getState()
+      const posPagination = { ...updatedState.posPagination }
+      posPagination[key] = posData
+
+      // Clear loading state
+      const finalLoadingState = { ...updatedState.loadingPOSMachines }
+      delete finalLoadingState[key]
+
+      this.state.setState({
+        posPagination,
+        loadingPOSMachines: finalLoadingState
+      })
+
+      console.log(`✅ Page ${newPage} loaded for store:`, key)
+    } catch (error) {
+      console.error('❌ Failed to load page:', error)
+
+      const errorState = this.state.getState()
+      const finalLoadingState = { ...errorState.loadingPOSMachines }
+      delete finalLoadingState[key]
+
+      this.state.setState({
+        error: 'Failed to load page: ' + error.message,
+        loadingPOSMachines: finalLoadingState
+      })
     }
   }
 

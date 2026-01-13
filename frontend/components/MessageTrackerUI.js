@@ -136,7 +136,29 @@ export class MessageTrackerUI {
   }
 
   /**
-   * Render target selection (store or cluster)
+   * Render cluster selection (cluster-only mode)
+   */
+  static renderClusterSelection(state, currentCluster, methods) {
+    return `
+      <div class="form-group">
+        <label for="cluster">Select Cluster *</label>
+        ${state.loadingClusters ? '<div style="padding: 8px; color: #999;">Loading clusters...</div>' : ''}
+        <select id="cluster" name="cluster" required ${state.loadingClusters ? 'disabled' : ''}>
+          <option value="">-- Select Cluster --</option>
+          ${state.clusters.map(cluster => `
+            <option value="${cluster.id}" ${state.selectedCluster === cluster.id ? 'selected' : ''}>
+              ${cluster.name}
+            </option>
+          `).join('')}
+        </select>
+      </div>
+
+      ${state.selectedCluster && currentCluster ? this.renderStoreSelection(state, currentCluster, methods) : ''}
+    `
+  }
+
+  /**
+   * Render target selection (store or cluster) - DEPRECATED, kept for compatibility
    */
   static renderTargetSelection(state, currentCluster, methods) {
     if (state.targetType === 'store') {
@@ -381,19 +403,73 @@ export class MessageTrackerUI {
   }
 
   /**
-   * Render expanded message details
+   * Render expanded message details with paginated stores
    */
   static renderExpandedRow(state, message, methods) {
-    console.log('🎨 Rendering expanded row for:', message.messageKey, 'with', message.stores?.length, 'stores')
+    const messageId = message.id
+    const isLoading = state.loadingStores && state.loadingStores[messageId]
+    const storesData = state.storesPagination && state.storesPagination[messageId]
+
+    console.log('🎨 Rendering expanded row for:', message.messageKey, 'loading:', isLoading, 'storesData:', !!storesData)
+
+    // Show loading state if loading and no data yet
+    if (isLoading && !storesData) {
+      return `
+        <tr class="expanded-details-row">
+          <td colspan="11">
+            <div class="expanded-content">
+              <h4>Store Details for ${message.messageKey}</h4>
+              <div class="loading-details">
+                <div class="spinner"></div>
+                <p>Loading stores...</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `
+    }
+
+    // Use paginated stores if available, otherwise fall back to cached stores
+    const stores = storesData ? storesData.content : (message.stores || [])
+    const showPagination = storesData && storesData.totalPages > 1
 
     return `
       <tr class="expanded-details-row">
         <td colspan="11">
           <div class="expanded-content">
+            ${isLoading ? '<div class="loading-overlay-small"><div class="spinner"></div></div>' : ''}
             <h4>Store Details for ${message.messageKey}</h4>
             <div class="stores-grid">
-              ${message.stores.map(store => this.renderStoreCard(state, message.id, store, methods)).join('')}
+              ${stores.map(store => this.renderStoreCard(state, message.id, store, methods)).join('')}
             </div>
+            ${showPagination ? `
+              <div class="stores-pagination">
+                <button
+                  class="pagination-btn"
+                  data-action="stores-prev-page"
+                  data-message-id="${messageId}"
+                  data-current-page="${storesData.page}"
+                  ${storesData.first ? 'disabled' : ''}
+                >
+                  ← Previous
+                </button>
+
+                <span class="pagination-info">
+                  Page ${storesData.page + 1} of ${storesData.totalPages}
+                  (${storesData.totalElements} stores)
+                </span>
+
+                <button
+                  class="pagination-btn"
+                  data-action="stores-next-page"
+                  data-message-id="${messageId}"
+                  data-current-page="${storesData.page}"
+                  ${storesData.last ? 'disabled' : ''}
+                >
+                  Next →
+                </button>
+              </div>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -406,8 +482,9 @@ export class MessageTrackerUI {
   static renderStoreCard(state, messageId, store, methods) {
     const key = `${messageId}-${store.storeId}`
     const isExpanded = state.expandedStores[key]
+    const storeName = store.storeName || store.name || store.storeId
 
-    console.log('  🏪 Rendering store card:', store.storeName, 'POS:', store.posMachines?.length)
+    console.log('  🏪 Rendering store card:', storeName, 'POS:', store.posMachines?.length)
 
     return `
       <div class="store-detail-card">
@@ -416,7 +493,7 @@ export class MessageTrackerUI {
             <button class="expand-icon-small">
               ${isExpanded ? '▼' : '▶'}
             </button>
-            <strong>${store.storeName}</strong>
+            <strong>${storeName}</strong>
           </div>
           <div class="store-card-stats">
             <span class="stat-mini delivered" title="Delivered">✓ ${store.overall.delivered}</span>
@@ -426,17 +503,37 @@ export class MessageTrackerUI {
           </div>
         </div>
 
-        ${isExpanded ? this.renderPOSMachinesList(store, methods) : ''}
+        ${isExpanded ? this.renderPOSMachinesList(state, messageId, store, methods) : ''}
       </div>
     `
   }
 
   /**
-   * Render POS machines list
+   * Render POS machines list with pagination
    */
-  static renderPOSMachinesList(store, methods) {
+  static renderPOSMachinesList(state, messageId, store, methods) {
+    const key = `${messageId}-${store.storeId}`
+    const isLoading = state.loadingPOSMachines && state.loadingPOSMachines[key]
+    const posData = state.posPagination && state.posPagination[key]
+
+    if (isLoading && !posData) {
+      return `
+        <div class="pos-machines-list">
+          <div class="loading-details">
+            <div class="spinner"></div>
+            <p>Loading POS machines...</p>
+          </div>
+        </div>
+      `
+    }
+
+    const posMachines = posData ? posData.content : (store.posMachines || [])
+    const showPagination = posData && posData.totalPages > 1
+
     return `
       <div class="pos-machines-list">
+        ${isLoading ? '<div class="loading-overlay-small"><div class="spinner"></div></div>' : ''}
+
         <table class="pos-detail-table">
           <thead>
             <tr>
@@ -447,7 +544,7 @@ export class MessageTrackerUI {
             </tr>
           </thead>
           <tbody>
-            ${store.posMachines.map(pos => `
+            ${posMachines.map(pos => `
               <tr>
                 <td>${pos.name}</td>
                 <td>
@@ -461,6 +558,35 @@ export class MessageTrackerUI {
             `).join('')}
           </tbody>
         </table>
+
+        ${showPagination ? `
+          <div class="pos-pagination">
+            <button
+              class="pagination-btn"
+              data-action="pos-prev-page"
+              data-store-key="${key}"
+              data-current-page="${posData.page}"
+              ${posData.first ? 'disabled' : ''}
+            >
+              ← Previous
+            </button>
+
+            <span class="pagination-info">
+              Page ${posData.page + 1} of ${posData.totalPages}
+              (${posData.totalElements} POS machines)
+            </span>
+
+            <button
+              class="pagination-btn"
+              data-action="pos-next-page"
+              data-store-key="${key}"
+              data-current-page="${posData.page}"
+              ${posData.last ? 'disabled' : ''}
+            >
+              Next →
+            </button>
+          </div>
+        ` : ''}
       </div>
     `
   }

@@ -457,6 +457,7 @@
 }
 
 .expanded-content {
+  position: relative;
   padding: 16px;
   min-height: 100px;
 }
@@ -561,6 +562,7 @@
 }
 
 .pos-machines-list {
+  position: relative;
   padding: 12px;
   background: #fafbfc;
   max-height: 300px;
@@ -593,6 +595,92 @@
 
 .pos-detail-table tbody tr:hover {
   background: #f9f9f9;
+}
+
+/* Stores Pagination */
+.stores-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-top: 20px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+/* POS Pagination */
+.pos-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.pagination-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-info {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.loading-overlay-small {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loading-overlay-small .spinner {
+  width: 30px;
+  height: 30px;
+}
+
+.loading-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading-details .spinner {
+  margin-bottom: 12px;
+}
+
+.loading-details p {
+  margin: 0;
+  font-size: 14px;
 }
 
 .status-indicator {
