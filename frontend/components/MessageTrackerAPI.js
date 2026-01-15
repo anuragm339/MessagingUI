@@ -102,8 +102,15 @@ export class MessageTrackerAPI {
             "ef242da1-004d-4bda-a775-3c1bb3bd1f4e": ["9321"],
             "7cc45342-3b31-4bde-ba28-a93057708743": ["9778"],
             "c0cda4cb-0d6c-4708-ab29-714baf632ca6": ["9316"],
-            "cf553240-f818-4557-bcc7-6ee03e3a8db5": ["9769"],
-            "98ff1cdb-25d8-405f-a592-7de3187e85f8": ["9775"]
+            "cf553240-f818-4257-bcc7-6ee03e3a8db5": ["8769"],
+            "98ff1cdb-25d8-435f-a592-7de3187e85f8": ["6775"],
+            "9a6c17d6-f542-44e4-b525-3984974f6203": ["7749"],
+            "1389934c-525a-46df-b0dd-e20032044fb3": ["2345"],
+            "ef242da1-004d-47da-a775-3c1bb3bd1f4e": ["1321"],
+            "7cc45342-3b31-48de-ba28-a93057708743": ["2178"],
+            "c0cda4cb-0d6c-4908-ab29-714baf632ca6": ["2216"],
+            "cf553240-f818-2157-bcc7-6ee03e3a8db5": ["2269"],
+            "98ff1cdb-25d8-225f-a592-7de3187e85f8": ["2375"]
           }
         }
       } else {
@@ -180,11 +187,12 @@ export class MessageTrackerAPI {
    * @param {string} messageKey - Message key
    * @param {number} page - Page number (0-indexed)
    * @param {number} size - Page size
+   * @param {string} search - Optional search query for filtering stores
    * @returns {Promise<Object>} Pageable store data with overall status
    */
-  static async fetchStoresByMessage(messageKey, page = 0, size = 20) {
+  static async fetchStoresByMessage(messageKey, page = 0, size = 20, search = '') {
     try {
-      console.log(`📡 Fetching stores: message=${messageKey}, page=${page}, size=${size}`)
+      console.log(`📡 Fetching stores: message=${messageKey}, page=${page}, size=${size}, search=${search}`)
 
       let data
 
@@ -198,8 +206,8 @@ export class MessageTrackerAPI {
         const startIdx = page * size
         const endIdx = Math.min(startIdx + size, totalElements)
 
-        const content = []
-        for (let i = startIdx; i < endIdx; i++) {
+        const allStores = []
+        for (let i = 0; i < totalElements; i++) {
           const storeNumber = String(9749 + i)
           const total = Math.floor(Math.random() * 10) + 5
           const delivered = Math.floor(Math.random() * total)
@@ -207,7 +215,7 @@ export class MessageTrackerAPI {
           const pending = Math.floor(Math.random() * (total - delivered - failed))
           const processing = total - delivered - failed - pending
 
-          content.push({
+          allStores.push({
             storeId: `store-uuid-${i + 1}`,
             name: storeNumber,
             overall: {
@@ -220,18 +228,38 @@ export class MessageTrackerAPI {
           })
         }
 
+        // Filter by search query if provided
+        let filteredStores = allStores
+        if (search && search.trim()) {
+          const searchLower = search.toLowerCase()
+          filteredStores = allStores.filter(store =>
+            store.name.toLowerCase().includes(searchLower) ||
+            store.storeId.toLowerCase().includes(searchLower)
+          )
+        }
+
+        // Apply pagination to filtered results
+        const filteredTotal = filteredStores.length
+        const filteredTotalPages = Math.ceil(filteredTotal / size)
+        const content = filteredStores.slice(startIdx, endIdx)
+
         data = {
           content,
           page,
           size,
-          totalElements,
-          totalPages,
+          totalElements: filteredTotal,
+          totalPages: filteredTotalPages,
           first: page === 0,
-          last: page === totalPages - 1
+          last: page === filteredTotalPages - 1
         }
       } else {
+        let url = `${API_BASE_URL}/stores?messageKey=${encodeURIComponent(messageKey)}&page=${page}&size=${size}`
+        if (search && search.trim()) {
+          url += `&search=${encodeURIComponent(search)}`
+        }
+
         const response = await fetch(
-          `${API_BASE_URL}/stores?messageKey=${encodeURIComponent(messageKey)}&page=${page}&size=${size}`,
+          url,
           {
             method: 'GET',
             headers: {

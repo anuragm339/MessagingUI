@@ -25,6 +25,7 @@ export class MessageTrackerState {
       filterStatus: 'all',
       searchQuery: '',
       storeSearchQuery: '',
+      storeFilterQuery: {},     // Object mapping messageId → search query
       displayLimit: 50,
       formExpanded: false,
 

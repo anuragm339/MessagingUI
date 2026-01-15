@@ -238,6 +238,11 @@ class MessageTracker2 {
         })
         break
 
+      case 'refresh-messages':
+        e.preventDefault()
+        this.handleRefreshMessages()
+        break
+
       case 'select-visible':
         e.preventDefault()
         this.handleSelectVisible()
@@ -276,15 +281,6 @@ class MessageTracker2 {
         const storesCurrentPage = parseInt(target.dataset.currentPage)
         const storesNewPage = action === 'stores-prev-page' ? storesCurrentPage - 1 : storesCurrentPage + 1
         this.handleStoresPagination(messageId, storesNewPage)
-        break
-
-      case 'pos-prev-page':
-      case 'pos-next-page':
-        e.preventDefault()
-        const storeKey = target.dataset.storeKey
-        const posCurrentPage = parseInt(target.dataset.currentPage)
-        const posNewPage = action === 'pos-prev-page' ? posCurrentPage - 1 : posCurrentPage + 1
-        this.handlePOSPagination(storeKey, posNewPage)
         break
     }
   }
@@ -340,6 +336,21 @@ class MessageTracker2 {
       this.searchDebounceTimer = setTimeout(() => {
         this.render()
       }, 300)
+    } else if (target.classList.contains('store-filter-input')) {
+      // Handle store filter with API call
+      const messageId = parseInt(target.dataset.messageId)
+      const searchQuery = target.value
+
+      // Update state
+      const storeFilterQuery = { ...this.state.get('storeFilterQuery') }
+      storeFilterQuery[messageId] = searchQuery
+      this.state.state.storeFilterQuery = storeFilterQuery
+
+      // Debounce API call (500ms delay)
+      clearTimeout(this.storeFilterDebounceTimer)
+      this.storeFilterDebounceTimer = setTimeout(() => {
+        this.handleStoreFilter(messageId, searchQuery)
+      }, 500)
     } else if (target.classList.contains('store-checkbox')) {
       const storeId = target.dataset.storeId
       const selectedStores = [...currentState.selectedStores]
@@ -447,11 +458,22 @@ class MessageTracker2 {
       )
 
       console.log('📝 New message tracked:', newMessage)
-      console.log('  - Stores:', newMessage.stores?.length)
-      console.log('  - First store POS count:', newMessage.stores?.[0]?.posMachines?.length)
+
+      // In mock mode, add to existing messages. In real mode, fetch from backend
+      const apiConfig = this.api.getConfig()
+      let trackedMessages
+
+      if (apiConfig.useMockData) {
+        // Mock mode: Add new message to existing list
+        trackedMessages = [newMessage, ...currentState.trackedMessages]
+      } else {
+        // Real mode: Fetch updated list from backend
+        const messagesData = await this.api.fetchMessages()
+        trackedMessages = messagesData.messages
+      }
 
       this.state.setState({
-        trackedMessages: [newMessage, ...currentState.trackedMessages],
+        trackedMessages,
         messageKey: '',
         storeNumber: '',
         selectedCluster: '',
@@ -544,6 +566,31 @@ class MessageTracker2 {
   }
 
   /**
+   * Handle refresh messages
+   */
+  async handleRefreshMessages() {
+    try {
+      console.log('🔄 Refreshing messages...')
+      this.state.setState({ loading: true, error: null })
+
+      const messagesData = await this.api.fetchMessages()
+
+      this.state.setState({
+        trackedMessages: messagesData.messages,
+        loading: false
+      })
+
+      console.log('✅ Messages refreshed:', messagesData.messages.length)
+    } catch (error) {
+      console.error('❌ Failed to refresh messages:', error)
+      this.state.setState({
+        error: 'Failed to refresh messages: ' + error.message,
+        loading: false
+      })
+    }
+  }
+
+  /**
    * Handle remove message
    */
   async handleRemoveMessage(target) {
@@ -615,8 +662,8 @@ class MessageTracker2 {
         error: null
       })
 
-      // Fetch first page of POS machines
-      const posData = await this.api.fetchPOSMachines(storeId, message.messageKey, 0, 20)
+      // Fetch all POS machines (no pagination, use large page size)
+      const posData = await this.api.fetchPOSMachines(storeId, message.messageKey, 0, 10000)
 
       // Store pagination data
       const updatedState = this.state.getState()
@@ -649,6 +696,60 @@ class MessageTracker2 {
   }
 
   /**
+   * Handle store filter/search
+   */
+  async handleStoreFilter(messageId, searchQuery) {
+    const currentState = this.state.getState()
+
+    // Find the message to get messageKey
+    const message = currentState.trackedMessages.find(m => m.id === parseInt(messageId))
+    if (!message) return
+
+    try {
+      console.log(`🔍 Filtering stores for message ${messageId}:`, searchQuery)
+
+      // Set loading state
+      const loadingStores = { ...currentState.loadingStores }
+      loadingStores[messageId] = true
+
+      this.state.setState({
+        loadingStores,
+        error: null
+      })
+
+      // Fetch stores with search query
+      const storesData = await this.api.fetchStoresByMessage(message.messageKey, 0, 20, searchQuery)
+
+      // Update pagination data
+      const updatedState = this.state.getState()
+      const storesPagination = { ...updatedState.storesPagination }
+      storesPagination[messageId] = storesData
+
+      // Clear loading state
+      const finalLoadingState = { ...updatedState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        storesPagination,
+        loadingStores: finalLoadingState
+      })
+
+      console.log(`✅ Filtered stores loaded: ${storesData.content.length} stores`)
+    } catch (error) {
+      console.error('❌ Failed to filter stores:', error)
+
+      const errorState = this.state.getState()
+      const finalLoadingState = { ...errorState.loadingStores }
+      delete finalLoadingState[messageId]
+
+      this.state.setState({
+        error: 'Failed to filter stores: ' + error.message,
+        loadingStores: finalLoadingState
+      })
+    }
+  }
+
+  /**
    * Handle pagination for stores
    */
   async handleStoresPagination(messageId, newPage) {
@@ -670,8 +771,11 @@ class MessageTracker2 {
         error: null
       })
 
-      // Fetch new page
-      const storesData = await this.api.fetchStoresByMessage(message.messageKey, newPage, 20)
+      // Get current search query
+      const searchQuery = (currentState.storeFilterQuery && currentState.storeFilterQuery[messageId]) || ''
+
+      // Fetch new page with search query
+      const storesData = await this.api.fetchStoresByMessage(message.messageKey, newPage, 20, searchQuery)
 
       // Update pagination data
       const updatedState = this.state.getState()

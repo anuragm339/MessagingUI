@@ -51,8 +51,13 @@ export class MessageTrackerUI {
   static renderHeader() {
     return `
       <div class="tracker-header">
-        <h2>Message Tracker</h2>
-        <p>Track multiple messages across stores and POS machines</p>
+        <div>
+          <h2>Message Tracker</h2>
+          <p>Track multiple messages across stores and POS machines</p>
+        </div>
+        <button class="refresh-btn" data-action="refresh-messages" title="Refresh message list">
+          🔄 Refresh
+        </button>
       </div>
     `
   }
@@ -439,6 +444,19 @@ export class MessageTrackerUI {
           <div class="expanded-content">
             ${isLoading ? '<div class="loading-overlay-small"><div class="spinner"></div></div>' : ''}
             <h4>Store Details for ${message.messageKey}</h4>
+
+            <div style="margin-bottom: 16px;">
+              <input
+                type="text"
+                class="store-filter-input"
+                data-message-id="${messageId}"
+                data-action="filter-stores"
+                placeholder="Search stores by name or ID..."
+                value="${state.storeFilterQuery && state.storeFilterQuery[messageId] || ''}"
+                style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+              />
+            </div>
+
             <div class="stores-grid">
               ${stores.map(store => this.renderStoreCard(state, message.id, store, methods)).join('')}
             </div>
@@ -528,7 +546,6 @@ export class MessageTrackerUI {
     }
 
     const posMachines = posData ? posData.content : (store.posMachines || [])
-    const showPagination = posData && posData.totalPages > 1
 
     return `
       <div class="pos-machines-list">
@@ -558,35 +575,6 @@ export class MessageTrackerUI {
             `).join('')}
           </tbody>
         </table>
-
-        ${showPagination ? `
-          <div class="pos-pagination">
-            <button
-              class="pagination-btn"
-              data-action="pos-prev-page"
-              data-store-key="${key}"
-              data-current-page="${posData.page}"
-              ${posData.first ? 'disabled' : ''}
-            >
-              ← Previous
-            </button>
-
-            <span class="pagination-info">
-              Page ${posData.page + 1} of ${posData.totalPages}
-              (${posData.totalElements} POS machines)
-            </span>
-
-            <button
-              class="pagination-btn"
-              data-action="pos-next-page"
-              data-store-key="${key}"
-              data-current-page="${posData.page}"
-              ${posData.last ? 'disabled' : ''}
-            >
-              Next →
-            </button>
-          </div>
-        ` : ''}
       </div>
     `
   }
