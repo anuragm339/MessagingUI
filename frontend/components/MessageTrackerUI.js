@@ -150,6 +150,9 @@ export class MessageTrackerUI {
         ${state.loadingClusters ? '<div style="padding: 8px; color: #999;">Loading clusters...</div>' : ''}
         <select id="cluster" name="cluster" required ${state.loadingClusters ? 'disabled' : ''}>
           <option value="">-- Select Cluster --</option>
+          <option value="ALL_CLUSTERS" ${state.selectedCluster === 'ALL_CLUSTERS' ? 'selected' : ''}>
+            All Clusters
+          </option>
           ${state.clusters.map(cluster => `
             <option value="${cluster.id}" ${state.selectedCluster === cluster.id ? 'selected' : ''}>
               ${cluster.name}
@@ -158,7 +161,7 @@ export class MessageTrackerUI {
         </select>
       </div>
 
-      ${state.selectedCluster && currentCluster ? this.renderStoreSelection(state, currentCluster, methods) : ''}
+      ${state.selectedCluster && state.selectedCluster !== 'ALL_CLUSTERS' && currentCluster ? this.renderStoreSelection(state, currentCluster, methods) : ''}
     `
   }
 
@@ -187,6 +190,9 @@ export class MessageTrackerUI {
           ${state.loadingClusters ? '<div style="padding: 8px; color: #999;">Loading clusters...</div>' : ''}
           <select id="cluster" name="cluster" required ${state.loadingClusters ? 'disabled' : ''}>
             <option value="">-- Select Cluster --</option>
+            <option value="ALL_CLUSTERS" ${state.selectedCluster === 'ALL_CLUSTERS' ? 'selected' : ''}>
+              All Clusters
+            </option>
             ${state.clusters.map(cluster => `
               <option value="${cluster.id}" ${state.selectedCluster === cluster.id ? 'selected' : ''}>
                 ${cluster.name}
@@ -195,7 +201,7 @@ export class MessageTrackerUI {
           </select>
         </div>
 
-        ${state.selectedCluster && currentCluster ? this.renderStoreSelection(state, currentCluster, methods) : ''}
+        ${state.selectedCluster && state.selectedCluster !== 'ALL_CLUSTERS' && currentCluster ? this.renderStoreSelection(state, currentCluster, methods) : ''}
       `
     }
   }

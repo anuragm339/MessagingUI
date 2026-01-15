@@ -401,10 +401,12 @@ class MessageTracker2 {
         displayLimit: 50
       })
 
-      // Load stores when cluster is selected
-      if (clusterId) {
+      // Load stores when cluster is selected (skip for ALL_CLUSTERS)
+      if (clusterId && clusterId !== 'ALL_CLUSTERS') {
         console.log('📡 Triggering store load for cluster:', clusterId)
         this.loadStoresForCluster(clusterId)
+      } else if (clusterId === 'ALL_CLUSTERS') {
+        console.log('✅ All Clusters selected - no store loading needed')
       }
     } else if (target.id === 'statusFilter') {
       this.state.setState({ filterStatus: target.value })
@@ -431,31 +433,88 @@ class MessageTracker2 {
       return
     }
 
-    let storesToTrack = []
+    let apiCallType = 'track' // 'track', 'track-store', 'track-all-clusters', 'track-all-stores'
+    let requestData = {}
 
     if (currentState.targetType === 'store') {
+      // Case 1: Direct store number entry
       if (!currentState.storeNumber) {
         alert('Please enter a store number')
         return
       }
-      storesToTrack = [{ id: currentState.storeNumber, name: `Store ${currentState.storeNumber}` }]
+      apiCallType = 'track-store'
+      requestData = {
+        messageKey: currentState.messageKey,
+        storeNumber: currentState.storeNumber
+      }
     } else {
-      if (!currentState.selectedCluster || currentState.selectedStores.length === 0) {
-        alert('Please select a cluster and at least one store')
+      // Cluster mode
+      if (!currentState.selectedCluster) {
+        alert('Please select a cluster')
         return
       }
-      const cluster = currentState.clusters.find(c => c.id === currentState.selectedCluster)
-      storesToTrack = cluster.stores.filter(s => currentState.selectedStores.includes(s.id))
+
+      if (currentState.selectedCluster === 'ALL_CLUSTERS') {
+        // Case 2: All Clusters selected - pass cluster IDs
+        apiCallType = 'track-all-clusters'
+        const clusterIds = currentState.clusters.map(c => c.id)
+        requestData = {
+          messageKey: currentState.messageKey,
+          clusterIds: clusterIds
+        }
+      } else {
+        // Specific cluster selected
+        const cluster = currentState.clusters.find(c => c.id === currentState.selectedCluster)
+
+        if (currentState.selectedStores.length === 0) {
+          alert('Please select at least one store')
+          return
+        }
+
+        // Check if all stores in cluster are selected
+        const allStoresSelected = cluster.stores.length === currentState.selectedStores.length
+
+        if (allStoresSelected) {
+          // Case 3: All stores in cluster selected - use same API as All Clusters
+          apiCallType = 'track-all-clusters'
+          requestData = {
+            messageKey: currentState.messageKey,
+            clusterIds: [currentState.selectedCluster] // Single cluster ID in array
+          }
+        } else {
+          // Case 4: Specific stores selected - use original API
+          apiCallType = 'track'
+          const storesToTrack = cluster.stores.filter(s => currentState.selectedStores.includes(s.id))
+          requestData = {
+            messageKey: currentState.messageKey,
+            targetType: currentState.targetType,
+            stores: storesToTrack
+          }
+        }
+      }
     }
 
     try {
       this.state.setState({ loading: true })
 
-      const newMessage = await this.api.trackMessage(
-        currentState.messageKey,
-        currentState.targetType,
-        storesToTrack
-      )
+      let newMessage
+      if (apiCallType === 'track') {
+        newMessage = await this.api.trackMessage(
+          requestData.messageKey,
+          requestData.targetType,
+          requestData.stores
+        )
+      } else if (apiCallType === 'track-store') {
+        newMessage = await this.api.trackMessageByStore(
+          requestData.messageKey,
+          requestData.storeNumber
+        )
+      } else if (apiCallType === 'track-all-clusters') {
+        newMessage = await this.api.trackMessageAllClusters(
+          requestData.messageKey,
+          requestData.clusterIds
+        )
+      }
 
       console.log('📝 New message tracked:', newMessage)
 

@@ -411,6 +411,93 @@ export class MessageTrackerAPI {
   }
 
   /**
+   * Track message by store number
+   * @param {string} messageKey - Message identifier
+   * @param {string} storeNumber - Store number
+   * @returns {Promise<Object>} Tracking data
+   */
+  static async trackMessageByStore(messageKey, storeNumber) {
+    try {
+      console.log('📡 Tracking message by store:', messageKey, 'store:', storeNumber)
+
+      let data
+
+      if (USE_MOCK_DATA) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        data = this._generateMockTrackingData(messageKey, 'store', [{ id: storeNumber, name: storeNumber }], Date.now())
+      } else {
+        const response = await fetch(`${API_BASE_URL}/messages/track/store`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ messageKey, storeNumber })
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        data = await response.json()
+      }
+
+      const transformed = transformTrackingResponse(data)
+      console.log('✅ Message tracked by store')
+      return transformed
+    } catch (error) {
+      console.error('❌ Failed to track message by store:', error)
+      const errorMessage = handleAPIError(error, 'tracking message by store')
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
+   * Track message for all clusters
+   * @param {string} messageKey - Message identifier
+   * @param {Array<string>} clusterIds - Array of cluster IDs
+   * @returns {Promise<Object>} Tracking data
+   */
+  static async trackMessageAllClusters(messageKey, clusterIds) {
+    try {
+      console.log('📡 Tracking message for all clusters:', messageKey, 'clusters:', clusterIds.length)
+
+      let data
+
+      if (USE_MOCK_DATA) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        // Generate mock data for multiple stores
+        const mockStores = []
+        for (let i = 0; i < 10; i++) {
+          mockStores.push({ id: `store-${i}`, name: `Store ${9749 + i}` })
+        }
+        data = this._generateMockTrackingData(messageKey, 'cluster', mockStores, Date.now())
+      } else {
+        const response = await fetch(`${API_BASE_URL}/messages/track/all-clusters`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ messageKey, clusterIds })
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        data = await response.json()
+      }
+
+      const transformed = transformTrackingResponse(data)
+      console.log('✅ Message tracked for all clusters')
+      return transformed
+    } catch (error) {
+      console.error('❌ Failed to track message for all clusters:', error)
+      const errorMessage = handleAPIError(error, 'tracking message for all clusters')
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
    * Fetch all tracked messages
    * @returns {Promise<{messages: Array}>}
    */
